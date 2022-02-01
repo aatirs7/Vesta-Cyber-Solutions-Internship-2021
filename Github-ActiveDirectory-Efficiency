@@ -1,0 +1,151 @@
+#creating new variable “people” and setting it equal to the import of desired csv file
+$people =  Import-CSV "custom file path of file containing names" | Select-Object username
+
+ #creating new variable”newPeople” set equal to loop which reformats name
+$newPeople= foreach ($Person in $people){
+
+  $FirstName = ($Person.username.replace('-','.') + '@va.gov');
+
+New-Object psobject -Property @{
+            newName = $firstName
+
+              }	
+
+
+}
+
+#out-file to update values in csv
+$newPeople | Out-File "custom file path"
+
+
+
+#renaming csv to xls file type
+ren "custom file path.csv" "custom file path.xls"
+
+
+#script to pull enabled users email from AD
+Get-ADUser -Filter 'enabled -eq $true' -Properties UserPrincipalName | Select-Object -Property UserPrincipalName| Export-CSV "custom file path.CSV" -NoTypeInformation
+
+#renaming csv to xls file type
+ren "custom file path.CSV" "custom file path.xls"
+
+
+
+
+#var setup to copy column from reformatted user doc and paste in disabled user email doc
+$sourceFile = "custom file path.xls"
+$destFile = "custom file path.xls"
+
+$excel=new-object -comobject excel.application;
+$excel.visible=$true;
+
+
+#setup the workbooks
+$SourceWorkBook=$Excel.Workbooks.open($sourceFile);
+$TargetWorkBook=$Excel.workBooks.open($destFile);
+
+#load the worksheets
+$SourceWorkBook.Worksheets.item(1).activate();
+$TargetWorkBook.WorkSheets.item(1).activate();
+
+
+#specify where to copy from
+$SourceRange1=$SourceWorkBook.WorkSheets.item(1).UsedRange
+$SourceRange1.copy() | Out-Null
+$newWorkSheet = "custom file path.xls"
+
+
+#specify where to paste
+$Range = $TargetWorkBook.WorkSheets.item(1).range(“A14700”)
+
+#paste column
+$TargetWorkBook.ActiveSheet.Paste($Range)
+
+
+
+#remove all extra spaces in column
+$TargetWorkBook.WorkSheets.item(1).Range("A1").EntireColumn.Replace(" ","")
+
+
+$TargetWorkBook.Save()
+$excel.quit()
+
+#pausing to allow for completion of above processes
+start-sleep -Seconds 5
+
+
+
+
+
+
+
+
+
+
+#Variable set to values which appear more than one time in column(duplicates)
+ $data = Get-Content -Path "custom file path.xls"  | Group-Object | Where-Object {$_.Count -gt 1} |  Select-Object -expand Name
+
+
+#Creates new column called “Name” populated with duplicate users in new file
+ $data | foreach {[PSCustomObject] @{Name = $_}} | Export-Excel -Path "custom file path.xls"
+
+
+
+#Setting up comObject to work with DupUserList.xls
+$finalDestFile = "custom file path.xls"
+
+$excel=new-object -comobject excel.application;
+$excel.visible=$true;
+#Setup the workbooks
+$finalWorkBook=$Excel.Workbooks.open($finalDestFile);
+
+
+$finalWorkBook.WorkSheets.item(1).activate();
+
+#Reformats users back into github user format
+
+$finalWorkBook.WorkSheets.item(1).Range("A1").EntireColumn.Replace("@va.gov","")
+
+$finalWorkBook.WorkSheets.item(1).Range("A1").EntireColumn.Replace(".","-")
+
+
+$finalWorkBook.Save()
+$excel.quit()
+
+start-sleep -Seconds 2
+
+ren "custom file path.xls" "custom file path.CSV"
+
+
+
+
+
+# enter your username and personal access token from Gitub
+$Token = 'custom access token'
+$Base64Token = [System.Convert]::ToBase64String([char[]]$Token);
+
+$Headers = @{
+    Authorization = 'Basic {0}' -f $Base64Token;
+}
+
+#put the name of the file where this exists
+$FileLocation = "custom filepath";
+
+#this will be your URL for the internal github enterprise
+$BaseUrl =  'custom url'
+
+
+Import-Csv $FileLocation | `
+ForEach-Object{
+    #this will be whatever the column name is in the excel sheet
+    Write-host "making change for this user: " $_.name
+
+    #setting up the api url
+    $uri = -join($BaseUrl,"/users/",$_.name,"/suspended")
+    $Body = @{
+        username = $_.name;
+        reason = 'enabling user for test purposes';
+          } | ConvertTo-Json
+
+    Invoke-RestMethod -Headers $Headers -Uri $uri -Body $Body -Method delete
+}
