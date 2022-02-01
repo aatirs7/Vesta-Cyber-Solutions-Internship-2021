@@ -1,6 +1,6 @@
 
-Below code failed to succeed
-Created policy for Lambda role with permissions 
+
+//Created policy for Lambda role with permissions 
 {
    "Version": "2012-10-17",
    "Statement": [
@@ -21,9 +21,9 @@ Created policy for Lambda role with permissions
    ]
 }
 
-Created Lambda role with previously created policy
-Created Lambda function
-Added Python 3.8 script
+//Created Lambda role with previously created policy
+//Created Lambda function
+//Added Python 3.8 script
 import boto3
 from botocore.exceptions import ClientError
 import datetime
