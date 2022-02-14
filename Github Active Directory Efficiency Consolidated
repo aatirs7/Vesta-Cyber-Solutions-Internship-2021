@@ -1,0 +1,21 @@
+#creating new variable “people” and setting it equal to the Import of the desired CSV file, replace file path with desired file path”
+ $people = Import-CSV "C:\Users\aatir\OneDrive\Documents\Aatir Personal\Vesta Internship\Documents\PowerShellScriptDemo.csv"
+
+#creating new variable “newPeople” and setting it equal to loop which will traverse column and change the formatting of the name to “first.last@va.gov”
+$newPeople= foreach ($Person in $people){
+
+  $FirstName = ($Person.Names.replace('-','.') + '@va.gov');
+
+New-Object psobject -Property @{
+              newName = $firstName
+
+}	
+
+
+}
+
+#exporting changes into the same csv, updating values
+$newPeople | Out-File "C:\Users\aatir\OneDrive\Documents\Aatir Personal\Vesta Internship\Documents\PowerShellScriptDemo.csv"
+
+
+
